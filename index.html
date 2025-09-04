@@ -2,59 +2,103 @@
 <html lang="zh">
 <head>
   <meta charset="UTF-8">
-  <title>Cloudinary 上传 Demo</title>
+  <title>情侣相册 💖</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+<body class="bg-pink-100 min-h-screen flex flex-col items-center p-6">
 
-  <h1 class="text-2xl font-bold mb-4">上传图片到 Cloudinary</h1>
+  <h1 class="text-2xl font-bold mb-4">情侣相册 💖</h1>
+
+  <!-- 手动输入 Token -->
+  <input type="password" id="ghToken" placeholder="请输入 GitHub Token"
+    class="px-2 py-1 border rounded mb-4 w-80">
 
   <!-- 上传区 -->
-  <input type="file" id="photoFile" class="mb-4">
-  <button onclick="startUpload()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">上传</button>
+  <input type="file" id="photoFiles" class="mb-4">
+  <button onclick="startUpload()" class="px-4 py-2 bg-pink-400 text-white rounded-lg">
+    上传
+  </button>
 
-  <!-- 展示上传结果 -->
-  <div id="result" class="mt-6 space-y-4 w-full max-w-md"></div>
+  <!-- 相册展示 -->
+  <div id="gallery" class="grid grid-cols-2 gap-4 w-full mt-6"></div>
 
   <script>
-    // 替换为你自己的 Cloudinary 信息
-    const CLOUD_NAME = "dbqhemrnw";           // 例如 abcd1234
-    const UPLOAD_PRESET = "unsigned_preset";   // 例如 unsigned_preset
+    const GH_OWNER   = "Qin-kings";   // 修改为你的 GitHub 用户名
+    const GH_REPO    = "love";  // 修改为你的仓库名
+    const GH_BRANCH  = "main";       // 分支
+    const GH_PATH    = "gallery.json";
 
-    async function startUpload(){
-      const file = document.getElementById("photoFile").files[0];
-      if(!file) return alert("请选择文件");
-
-      const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
-
-      const formData = new FormData();
-      formData.append("file", file);
-      formData.append("upload_preset", UPLOAD_PRESET);
-
-      try {
-        const res = await fetch(url, { method: "POST", body: formData });
-        const data = await res.json();
-        console.log("上传返回：", data);
-
-        if(data.secure_url){
-          const div = document.createElement("div");
-          div.innerHTML = `
-            <p class="text-sm text-gray-600">上传成功 ✅</p>
-            <img src="${data.secure_url}" class="w-full rounded shadow">
-            <p class="break-all text-xs text-gray-500">${data.secure_url}</p>
-          `;
-          document.getElementById("result").prepend(div);
-        }else{
-          alert("上传失败：" + JSON.stringify(data));
-        }
-      } catch(e){
-        console.error(e);
-        alert("上传出错 ❌ " + e.message);
-      }
+    // 渲染相册
+    async function refreshGallery() {
+      const url = `https://raw.githubusercontent.com/${GH_OWNER}/${GH_REPO}/${GH_BRANCH}/${GH_PATH}`;
+      const res = await fetch(url, {cache: "no-store"});
+      if (!res.ok) return;
+      const list = await res.json();
+      const container = document.getElementById("gallery");
+      container.innerHTML = "";
+      list.slice().reverse().forEach(item => {
+        const img = document.createElement("img");
+        img.src = item.src;
+        img.className = "w-full h-40 object-cover rounded-lg shadow";
+        container.appendChild(img);
+      });
     }
+
+    // 文件转 base64
+    function fileToBase64(file){
+      return new Promise((resolve, reject)=>{
+        const r = new FileReader();
+        r.onload = ()=>resolve(r.result.split(",")[1]);
+        r.onerror = reject;
+        r.readAsDataURL(file);
+      });
+    }
+
+    // 上传入口
+    async function startUpload(){
+      const GH_TOKEN = document.getElementById("ghToken").value.trim();
+      if (!GH_TOKEN) return alert("请先输入 GitHub Token！");
+
+      const files = document.getElementById("photoFiles").files;
+      if(files.length === 0) return alert("请选择文件");
+
+      // 读 manifest
+      const res1 = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}?ref=${GH_BRANCH}`, {
+        headers: {"Accept": "application/vnd.github+json"}
+      });
+      const j = await res1.json();
+      const list = JSON.parse(atob(j.content));
+      const sha = j.sha;
+
+      // 添加文件（这里只是把 base64 当作内容存进去，你也可以换成图床）
+      for(const f of files){
+        const base64 = await fileToBase64(f);
+        list.push({src: `data:image/${f.type.split("/")[1]};base64,${base64}`, who:"我们", ts: Date.now()});
+      }
+
+      // 写 manifest
+      const body = {
+        message: "add photo",
+        content: btoa(unescape(encodeURIComponent(JSON.stringify(list, null, 2)))),
+        sha, branch: GH_BRANCH
+      };
+      const res2 = await fetch(`https://api.github.com/repos/${GH_OWNER}/${GH_REPO}/contents/${GH_PATH}`, {
+        method: "PUT",
+        headers: {
+          "Accept": "application/vnd.github+json",
+          "Authorization": `Bearer ${GH_TOKEN}`
+        },
+        body: JSON.stringify(body)
+      });
+      if(!res2.ok) return alert("上传失败：" + await res2.text());
+
+      alert("上传成功 ✅");
+      refreshGallery();
+    }
+
+    document.addEventListener("DOMContentLoaded", refreshGallery);
   </script>
 </body>
 </html>
-
 
 
