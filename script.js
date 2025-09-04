@@ -267,11 +267,17 @@ function getCfg() {
   };
 }
 
-// 读取 manifest（优先用 GitHub API）
+// 修改 readManifestViaAPI 函数
 async function readManifestViaAPI() {
-  const { ghOwner, ghRepo, ghFile, ghBranch } = getCfg();
+  const { ghOwner, ghRepo, ghFile, ghBranch, ghToken } = getCfg();
   const url = `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/${encodeURIComponent(ghFile)}?ref=${encodeURIComponent(ghBranch)}`;
-  const res = await fetch(url, { headers: { 'Accept': 'application/vnd.github+json' } });
+  
+  const headers = { 'Accept': 'application/vnd.github+json' };
+  if (ghToken) {
+    headers['Authorization'] = `Bearer ${ghToken}`;
+  }
+  
+  const res = await fetch(url, { headers });
   if (res.status === 404) return { list: [], sha: null };
   const j = await res.json();
   if (!res.ok) throw new Error(j.message || ('HTTP ' + res.status));
@@ -289,6 +295,7 @@ async function readManifestViaRaw() {
   return await res.json();
 }
 
+// 修改 fetchManifest 函数，添加更好的错误处理
 async function fetchManifest() {
   // 优先尝试 GitHub API（通常比 raw 更"新鲜"）
   try {
@@ -296,8 +303,14 @@ async function fetchManifest() {
     return r; // {list, sha}
   } catch (e) {
     console.warn('GitHub API 读取失败，回退到 raw：', e);
-    const list = await readManifestViaRaw();
-    return { list, sha: null };
+    try {
+      const list = await readManifestViaRaw();
+      return { list, sha: null };
+    } catch (rawError) {
+      console.error('Raw fetch also failed:', rawError);
+      // 如果两者都失败，返回空列表
+      return { list: [], sha: null };
+    }
   }
 }
 
@@ -307,6 +320,16 @@ async function renderGallery() {
     const { list } = await fetchManifest();
     const container = $('#gallery');
     container.innerHTML = '';
+
+    if (!list || list.length === 0) {
+    container.innerHTML = `
+      <div class="col-span-full text-center py-8 text-gray-500">
+        <i class="fa fa-camera text-4xl mb-3"></i>
+        <p>还没有照片，上传第一张照片吧！</p>
+      </div>
+`    ;
+    return;
+    }
     
     (list || []).slice().sort((a,b)=> (b.ts||0)-(a.ts||0)).forEach((item, idx) => {
       const div = document.createElement('div');
@@ -356,6 +379,16 @@ async function renderGallery() {
     msg('');
   } catch (e) {
     console.error('renderGallery error', e);
+    const container = $('#gallery');
+    container.innerHTML = `
+      <div class="col-span-full text-center py-8 text-red-500">
+        <i class="fa fa-exclamation-triangle text-4xl mb-3"></i>
+        <p>加载相册失败：${e.message || e}</p>
+        <button onclick="renderGallery()" class="mt-3 px-4 py-2 bg-pink-500 text-white rounded">
+          重试
+        </button>
+      </div>
+    `;
     msg('加载相册失败：' + (e.message || e));
   }
 }
@@ -396,6 +429,8 @@ document.addEventListener('DOMContentLoaded', () => {
  // 添加管理按钮事件监听
  document.getElementById('manageGalleryBtn').addEventListener('click', toggleManageMode);
  document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedImages);
+ // 添加刷新按钮事件监听
+ document.getElementById('refreshGalleryBtn').addEventListener('click', renderGallery);
  // 文件选择时显示文件名
  document.getElementById('fileInput').addEventListener('change', function(e) {
    const fileName = document.getElementById('fileName');
@@ -485,6 +520,7 @@ async function waitForManifestToContain(expectedUrls, {attempts=8, delayMs=900} 
 
 // 上传入口：Cloudinary -> 写 GitHub -> 等待生效 -> 刷新
 async function startUpload() {
+  if (!checkRequiredSettings()) return;
   try {
     msg('上传中…');
     const files = Array.from($('#fileInput').files || []);
@@ -666,6 +702,7 @@ function updateDeleteButtonState() {
 
 // 删除选中的图片
 async function deleteSelectedImages() {
+  if (!checkRequiredSettings()) return;
   if (selectedImages.length === 0) return;
   
   if (!confirm(`确定要删除选中的 ${selectedImages.length} 张照片吗？此操作不可撤销。`)) {
@@ -728,4 +765,24 @@ async function waitForManifestToNotContain(unwantedUrls, {attempts=8, delayMs=90
     await new Promise(r => setTimeout(r, delayMs));
   }
   return false;
+}
+
+// 添加一个函数来检查必要的设置
+function checkRequiredSettings() {
+  const { cloudName, uploadPreset, ghOwner, ghRepo, ghToken } = getCfg();
+  const errors = [];
+  
+  if (!cloudName) errors.push('Cloudinary Cloud Name');
+  if (!uploadPreset) errors.push('Cloudinary Upload Preset');
+  if (!ghOwner) errors.push('GitHub Owner');
+  if (!ghRepo) errors.push('GitHub Repo');
+  if (!ghToken) errors.push('GitHub Token');
+  
+  if (errors.length > 0) {
+    alert(`请先完成以下设置：\n${errors.join('\n')}\n\n点击右上角的设置按钮进行配置。`);
+    openSettingsModal();
+    return false;
+  }
+  
+  return true;
 }
