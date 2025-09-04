@@ -317,6 +317,10 @@ async function fetchManifest() {
 // 替换现有的 renderGallery 函数
 async function renderGallery() {
   try {
+    // 每次渲染相册时，重置选择状态
+    selectedImages = [];
+    updateDeleteButtonState();
+    
     const { list } = await fetchManifest();
     const container = $('#gallery');
     container.innerHTML = '';
@@ -660,10 +664,11 @@ document.addEventListener('keydown', (e) => {
     closeImageModal();
   }
 });
+
 // 切换管理模式
+// 修改 toggleManageMode 函数
 function toggleManageMode() {
   isManageMode = !isManageMode;
-  selectedImages = [];
   
   const manageBtn = document.getElementById('manageGalleryBtn');
   const deleteContainer = document.getElementById('deleteSelectedContainer');
@@ -678,31 +683,45 @@ function toggleManageMode() {
     manageBtn.classList.remove('bg-gray-500');
     manageBtn.classList.add('bg-blue-500');
     deleteContainer.classList.add('hidden');
+    
+    // 退出管理模式时，清除所有选择状态
+    selectedImages = [];
+    
+    // 取消所有选择框的选中状态
+    document.querySelectorAll('.image-checkbox').forEach(checkbox => {
+      checkbox.checked = false;
+    });
+    
+    // 更新删除按钮状态
+    updateDeleteButtonState();
   }
   
   // 显示/隐藏所有选择框
   document.querySelectorAll('.image-checkbox').forEach(checkbox => {
     checkbox.parentElement.classList.toggle('hidden', !isManageMode);
   });
-  
-  updateDeleteButtonState();
 }
 
 // 更新删除按钮状态
+// 修改 updateDeleteButtonState 函数
 function updateDeleteButtonState() {
   const deleteBtn = document.getElementById('deleteSelectedBtn');
   if (selectedImages.length > 0) {
     deleteBtn.disabled = false;
+    deleteBtn.classList.remove('bg-gray-400', 'cursor-not-allowed');
+    deleteBtn.classList.add('bg-red-500', 'hover:bg-red-600');
     deleteBtn.innerHTML = `<i class="fa fa-trash"></i> 删除选中 (${selectedImages.length})`;
   } else {
     deleteBtn.disabled = true;
+    deleteBtn.classList.remove('bg-red-500', 'hover:bg-red-600');
+    deleteBtn.classList.add('bg-gray-400', 'cursor-not-allowed');
     deleteBtn.innerHTML = '<i class="fa fa-trash"></i> 删除选中';
   }
 }
 
 // 删除选中的图片
+// 修改 deleteSelectedImages 函数
 async function deleteSelectedImages() {
-  if (!checkRequiredSettings()) return;
   if (selectedImages.length === 0) return;
   
   if (!confirm(`确定要删除选中的 ${selectedImages.length} 张照片吗？此操作不可撤销。`)) {
@@ -735,6 +754,8 @@ async function deleteSelectedImages() {
     // 退出管理模式并刷新相册
     isManageMode = false;
     selectedImages = [];
+    
+    // 更新按钮状态
     document.getElementById('manageGalleryBtn').innerHTML = '<i class="fa fa-cog"></i> 管理';
     document.getElementById('manageGalleryBtn').classList.remove('bg-gray-500');
     document.getElementById('manageGalleryBtn').classList.add('bg-blue-500');
