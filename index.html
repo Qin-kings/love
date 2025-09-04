@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>Cloudinary 上传 Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex flex-col items-center p-6">
+
+  <h1 class="text-2xl font-bold mb-4">上传图片到 Cloudinary</h1>
+
+  <!-- 上传区 -->
+  <input type="file" id="photoFile" class="mb-4">
+  <button onclick="startUpload()" class="px-4 py-2 bg-blue-500 text-white rounded-lg">上传</button>
+
+  <!-- 展示上传结果 -->
+  <div id="result" class="mt-6 space-y-4 w-full max-w-md"></div>
+
+  <script>
+    // 替换为你自己的 Cloudinary 信息
+    const CLOUD_NAME = "dbqhemrnw";           // 例如 abcd1234
+    const UPLOAD_PRESET = "Yunsigned_preset";   // 例如 unsigned_preset
+
+    async function startUpload(){
+      const file = document.getElementById("photoFile").files[0];
+      if(!file) return alert("请选择文件");
+
+      const url = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
+
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("upload_preset", UPLOAD_PRESET);
+
+      try {
+        const res = await fetch(url, { method: "POST", body: formData });
+        const data = await res.json();
+        console.log("上传返回：", data);
+
+        if(data.secure_url){
+          const div = document.createElement("div");
+          div.innerHTML = `
+            <p class="text-sm text-gray-600">上传成功 ✅</p>
+            <img src="${data.secure_url}" class="w-full rounded shadow">
+            <p class="break-all text-xs text-gray-500">${data.secure_url}</p>
+          `;
+          document.getElementById("result").prepend(div);
+        }else{
+          alert("上传失败：" + JSON.stringify(data));
+        }
+      } catch(e){
+        console.error(e);
+        alert("上传出错 ❌ " + e.message);
+      }
+    }
+  </script>
+</body>
+</html>
+
+
