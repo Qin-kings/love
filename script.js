@@ -231,10 +231,10 @@ const $ = s => document.querySelector(s);
 const msg = t => { $('#msg').textContent = t || ''; };
 
 function loadCfgToForm() {
-  $('#cloudName').value = localStorage.getItem(C.cloudName) || '';
-  $('#uploadPreset').value = localStorage.getItem(C.uploadPreset) || '';
-  $('#ghOwner').value = localStorage.getItem(C.ghOwner) || '';
-  $('#ghRepo').value = localStorage.getItem(C.ghRepo) || '';
+  $('#cloudName').value = localStorage.getItem(C.cloudName) || 'dbqhemrnw';
+  $('#uploadPreset').value = localStorage.getItem(C.uploadPreset) || 'unsigned_preset';
+  $('#ghOwner').value = localStorage.getItem(C.ghOwner) || 'Qin-kings';
+  $('#ghRepo').value = localStorage.getItem(C.ghRepo) || 'love';
   $('#ghBranch').value = localStorage.getItem(C.ghBranch) || 'main';
   $('#ghFile').value = localStorage.getItem(C.ghFile) || 'gallery.json';
   const t = localStorage.getItem(C.ghTokenSaved) || '';
