@@ -514,7 +514,7 @@
       }
     }
 
-    // 渲染相册
+    // 修改 renderGallery 函数中的事件绑定部分
     async function renderGallery() {
       try {
         const { list } = await fetchManifest();
@@ -523,25 +523,25 @@
         (list || []).slice().sort((a,b)=> (b.ts||0)-(a.ts||0)).forEach((item, idx) => {
           const div = document.createElement('div');
           div.className = 'relative cursor-pointer group';
-         
+        
           const img = document.createElement('img');
           img.src = item.src;
           img.alt = item.alt || `照片 ${idx+1}`;
           img.className = 'w-full h-40 object-cover rounded-lg shadow transition-transform duration-300 group-hover:scale-105';
-          
-          // 添加点击事件
-          img.addEventListener('click', () => {
-            console.log('点击图片，URL:', item.src); // 添加调试信息
-            openImageModal(item.src);
-          });
          
+          // 修改这里：直接在创建图片时添加 onclick 事件
+          img.onclick = () => {
+            console.log('点击图片，URL:', item.src);
+            openImageModal(item.src);
+          };
+        
           // 添加悬停效果
           const overlay = document.createElement('div');
           overlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-300 flex items-center justify-center';
-         
+        
           const eyeIcon = document.createElement('i');
           eyeIcon.className = 'fa fa-eye text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300';
-         
+        
           overlay.appendChild(eyeIcon);
           div.appendChild(img);
           div.appendChild(overlay);
@@ -552,8 +552,8 @@
         console.error('renderGallery error', e);
         msg('加载相册失败：' + (e.message || e));
       }
-    }
-
+    
+     
     // Cloudinary 上传
     async function uploadToCloudinary(file) {
       const { cloudName, uploadPreset } = getCfg();
@@ -761,6 +761,7 @@
   </script>
 </body>
 </html>
+
 
 
 
