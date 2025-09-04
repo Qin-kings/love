@@ -709,14 +709,34 @@
     document.getElementById('settingsBtn').addEventListener('click', openSettingsModal);
     document.getElementById('modalSaveCfgBtn').addEventListener('click', saveFormToCfg);
     document.getElementById('refreshGalleryBtn').addEventListener('click', renderGallery);
+   
     // 图片放大功能
     function openImageModal(src) {
       const modal = document.getElementById('imageModal');
       const modalImage = document.getElementById('modalImage');
+     
+      console.log('打开图片模态框，尝试加载图片:', src);
+     
+      // 确保URL有效
+      if (!src || typeof src !== 'string') {
+        console.error('无效的图片URL:', src);
+        return;
+      }
+     
+      // 添加加载事件监听器
+      modalImage.onload = function() {
+        console.log('图片加载成功');
+      };
+     
+      modalImage.onerror = function() {
+        console.error('图片加载失败，URL:', src);
+        // 可以设置一个默认错误图片
+        modalImage.alt = '图片加载失败';
+      };
+     
       modalImage.src = src;
       modal.classList.remove('hidden');
       document.body.style.overflow = 'hidden'; // 防止背景滚动
-      console.log('打开图片模态框，图片URL:', src); // 添加调试信息
     }
    
     function closeImageModal() {
@@ -741,6 +761,7 @@
   </script>
 </body>
 </html>
+
 
 
 
