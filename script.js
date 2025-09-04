@@ -431,86 +431,28 @@ function handleGalleryClick(e) {
 
 // 确保在页面加载时初始化事件处理
 document.addEventListener('DOMContentLoaded', () => {
-  loadTableInfo();
-  loadCfgToForm();
-  renderGallery();
+ loadTableInfo();
+ loadCfgToForm();
+ renderGallery();
   
-  // 添加管理按钮事件监听
-  document.getElementById('manageGalleryBtn').addEventListener('click', toggleManageMode);
-  document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedImages);
-  
-  // 添加刷新按钮事件监听
-  document.getElementById('refreshGalleryBtn').addEventListener('click', renderGallery);
-  
-  // 文件选择时显示文件名
-  document.getElementById('fileInput').addEventListener('change', function(e) {
-    const fileName = document.getElementById('fileName');
-    if (this.files.length > 0) {
-      if (this.files.length === 1) {
-        fileName.textContent = this.files[0].name;
-      } else {
-        fileName.textContent = `${this.files.length}个文件已选择`;
-      }
-    } else {
-      fileName.textContent = "未选择任何文件";
-    }
-  });
-  
-  // 为 loveDateModal 添加点击事件处理
-  const loveDateModal = document.getElementById('loveDateModal');
-  if (loveDateModal) {
-    loveDateModal.addEventListener('click', function(e) {
-      // 如果点击的是模态框背景（而不是内容区域），则关闭模态框
-      if (e.target === this) {
-        closeModal('loveDateModal');
-      }
-    });
-  }
-  
-  // 阻止 loveDateModal 内容区域的点击事件冒泡
-  const loveDateModalContent = document.querySelector('#loveDateModal > div');
-  if (loveDateModalContent) {
-    loveDateModalContent.addEventListener('click', function(e) {
-      e.stopPropagation();
-    });
-  }
-  
-  // 为 avatarModal 添加点击事件处理
-  const avatarModal = document.getElementById('avatarModal');
-  if (avatarModal) {
-    avatarModal.addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeModal('avatarModal');
-      }
-    });
-  }
-  
-  // 阻止 avatarModal 内容区域的点击事件冒泡
-  const avatarModalContent = document.querySelector('#avatarModal > div');
-  if (avatarModalContent) {
-    avatarModalContent.addEventListener('click', function(e) {
-      e.stopPropagation();
-    });
-  }
-  
-  // 为 settingsModal 添加点击事件处理
-  const settingsModal = document.getElementById('settingsModal');
-  if (settingsModal) {
-    settingsModal.addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeSettingsModal();
-      }
-    });
-  }
-  
-  // 阻止 settingsModal 内容区域的点击事件冒泡
-  const settingsModalContent = document.querySelector('#settingsModal > div');
-  if (settingsModalContent) {
-    settingsModalContent.addEventListener('click', function(e) {
-      e.stopPropagation();
-    });
-  }
-});
+ // 添加管理按钮事件监听
+ document.getElementById('manageGalleryBtn').addEventListener('click', toggleManageMode);
+ document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedImages);
+ // 添加刷新按钮事件监听
+ document.getElementById('refreshGalleryBtn').addEventListener('click', renderGallery);
+ // 文件选择时显示文件名
+ document.getElementById('fileInput').addEventListener('change', function(e) {
+   const fileName = document.getElementById('fileName');
+   if (this.files.length > 0) {
+     if (this.files.length === 1) {
+       fileName.textContent = this.files[0].name;
+     } else {
+       fileName.textContent = `${this.files.length}个文件已选择`;
+     }
+   } else {
+     fileName.textContent = "未选择任何文件";
+   }
+ });
 
 
  // 初始化并启动计时器更新恋爱时长
