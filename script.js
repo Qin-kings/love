@@ -1,4 +1,8 @@
 // ========== 原有功能代码 ==========
+// 在文件顶部添加
+let isManageMode = false;
+let selectedImages = [];
+
 let currentAvatarId = null;
 // 默认头像路径
 const defaultAvatars = {
@@ -297,44 +301,63 @@ async function fetchManifest() {
   }
 }
 
-// 修改 renderGallery 函数
+// 替换现有的 renderGallery 函数
 async function renderGallery() {
- try {
-   const { list } = await fetchManifest();
-   const container = $('#gallery');
-   container.innerHTML = '';
-   
-   (list || []).slice().sort((a,b)=> (b.ts||0)-(a.ts||0)).forEach((item, idx) => {
-     const div = document.createElement('div');
-     div.className = 'relative cursor-pointer group';
-     div.setAttribute('data-src', item.src); // 添加数据属性存储图片URL
+  try {
+    const { list } = await fetchManifest();
+    const container = $('#gallery');
+    container.innerHTML = '';
     
-     const img = document.createElement('img');
-     img.src = item.src;
-     img.alt = item.alt || `照片 ${idx+1}`;
-     img.className = 'w-full h-40 object-cover rounded-lg shadow transition-transform duration-300 group-hover:scale-105';
-     img.loading = 'lazy'; // 添加懒加载
+    (list || []).slice().sort((a,b)=> (b.ts||0)-(a.ts||0)).forEach((item, idx) => {
+      const div = document.createElement('div');
+      div.className = 'relative cursor-pointer group';
+      div.setAttribute('data-src', item.src);
+      
+      const img = document.createElement('img');
+      img.src = item.src;
+      img.alt = item.alt || `照片 ${idx+1}`;
+      img.className = 'w-full h-40 object-cover rounded-lg shadow transition-transform duration-300 group-hover:scale-105';
+      img.loading = 'lazy';
+      
+      // 添加悬停效果
+      const overlay = document.createElement('div');
+      overlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-300 flex items-center justify-center';
+      
+      const eyeIcon = document.createElement('i');
+      eyeIcon.className = 'fa fa-eye text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300';
+      
+      overlay.appendChild(eyeIcon);
+      
+      // 添加选择框（仅在管理模式下显示）
+      const checkboxContainer = document.createElement('div');
+      checkboxContainer.className = `absolute bottom-2 left-2 ${isManageMode ? '' : 'hidden'}`;
+      const checkbox = document.createElement('input');
+      checkbox.type = 'checkbox';
+      checkbox.className = 'image-checkbox w-5 h-5';
+      checkbox.value = item.src;
+      checkbox.addEventListener('change', function() {
+        if (this.checked) {
+          selectedImages.push(this.value);
+        } else {
+          selectedImages = selectedImages.filter(src => src !== this.value);
+        }
+        updateDeleteButtonState();
+      });
+      checkboxContainer.appendChild(checkbox);
+      
+      div.appendChild(img);
+      div.appendChild(overlay);
+      div.appendChild(checkboxContainer);
+      container.appendChild(div);
+    });
     
-     // 添加悬停效果
-     const overlay = document.createElement('div');
-     overlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-300 flex items-center justify-center';
-    
-     const eyeIcon = document.createElement('i');
-     eyeIcon.className = 'fa fa-eye text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300';
-    
-     overlay.appendChild(eyeIcon);
-     div.appendChild(img);
-     div.appendChild(overlay);
-     container.appendChild(div);
-   });
-   
-   // 添加事件委托处理点击
-   addGalleryClickHandlers();
-   msg('');
- } catch (e) {
-   console.error('renderGallery error', e);
-   msg('加载相册失败：' + (e.message || e));
- }
+    // 添加事件委托处理点击
+    addGalleryClickHandlers();
+    msg('');
+  } catch (e) {
+    console.error('renderGallery error', e);
+    msg('加载相册失败：' + (e.message || e));
+  }
 }
 
 // 添加事件委托处理函数
@@ -351,6 +374,8 @@ function addGalleryClickHandlers() {
 
 // 处理画廊点击事件
 function handleGalleryClick(e) {
+ // 如果在管理模式下，不打开图片
+ if (isManageMode) return;
  // 查找被点击的图片容器
  const item = e.target.closest('[data-src]');
  if (item) {
@@ -367,7 +392,10 @@ document.addEventListener('DOMContentLoaded', () => {
  loadTableInfo();
  loadCfgToForm();
  renderGallery();
- 
+  
+ // 添加管理按钮事件监听
+ document.getElementById('manageGalleryBtn').addEventListener('click', toggleManageMode);
+ document.getElementById('deleteSelectedBtn').addEventListener('click', deleteSelectedImages);
  // 文件选择时显示文件名
  document.getElementById('fileInput').addEventListener('change', function(e) {
    const fileName = document.getElementById('fileName');
@@ -596,3 +624,108 @@ document.addEventListener('keydown', (e) => {
     closeImageModal();
   }
 });
+// 切换管理模式
+function toggleManageMode() {
+  isManageMode = !isManageMode;
+  selectedImages = [];
+  
+  const manageBtn = document.getElementById('manageGalleryBtn');
+  const deleteContainer = document.getElementById('deleteSelectedContainer');
+  
+  if (isManageMode) {
+    manageBtn.innerHTML = '<i class="fa fa-times"></i> 取消管理';
+    manageBtn.classList.remove('bg-blue-500');
+    manageBtn.classList.add('bg-gray-500');
+    deleteContainer.classList.remove('hidden');
+  } else {
+    manageBtn.innerHTML = '<i class="fa fa-cog"></i> 管理';
+    manageBtn.classList.remove('bg-gray-500');
+    manageBtn.classList.add('bg-blue-500');
+    deleteContainer.classList.add('hidden');
+  }
+  
+  // 显示/隐藏所有选择框
+  document.querySelectorAll('.image-checkbox').forEach(checkbox => {
+    checkbox.parentElement.classList.toggle('hidden', !isManageMode);
+  });
+  
+  updateDeleteButtonState();
+}
+
+// 更新删除按钮状态
+function updateDeleteButtonState() {
+  const deleteBtn = document.getElementById('deleteSelectedBtn');
+  if (selectedImages.length > 0) {
+    deleteBtn.disabled = false;
+    deleteBtn.innerHTML = `<i class="fa fa-trash"></i> 删除选中 (${selectedImages.length})`;
+  } else {
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<i class="fa fa-trash"></i> 删除选中';
+  }
+}
+
+// 删除选中的图片
+async function deleteSelectedImages() {
+  if (selectedImages.length === 0) return;
+  
+  if (!confirm(`确定要删除选中的 ${selectedImages.length} 张照片吗？此操作不可撤销。`)) {
+    return;
+  }
+  
+  try {
+    msg('删除中...');
+    
+    // 获取当前manifest
+    const { list, sha } = await fetchManifest();
+    
+    // 从列表中移除选中的图片
+    const updatedList = list.filter(item => !selectedImages.includes(item.src));
+    
+    // 写回 GitHub
+    await writeManifest(updatedList, sha, `删除 ${selectedImages.length} 张照片`);
+    
+    msg('删除成功，等待更新生效...');
+    
+    // 等待manifest生效
+    const ok = await waitForManifestToNotContain(selectedImages, { attempts: 10, delayMs: 900 });
+    
+    if (!ok) {
+      msg('删除成功，但未在短时间内检测到更新（可能 CDN 延迟）。稍等片刻或手动刷新。');
+    } else {
+      msg('更新已生效，刷新相册中...');
+    }
+    
+    // 退出管理模式并刷新相册
+    isManageMode = false;
+    selectedImages = [];
+    document.getElementById('manageGalleryBtn').innerHTML = '<i class="fa fa-cog"></i> 管理';
+    document.getElementById('manageGalleryBtn').classList.remove('bg-gray-500');
+    document.getElementById('manageGalleryBtn').classList.add('bg-blue-500');
+    document.getElementById('deleteSelectedContainer').classList.add('hidden');
+    
+    await renderGallery();
+    msg('照片已删除 ✅');
+    showNotification(`已删除 ${selectedImages.length} 张照片 ✅`);
+  } catch (e) {
+    console.error('deleteSelectedImages error', e);
+    alert('删除失败：' + (e.message || e));
+    msg('删除失败：' + (e.message || e));
+    showNotification('删除失败：' + (e.message || e));
+  }
+}
+
+// 添加等待manifest不包含特定URL的函数
+async function waitForManifestToNotContain(unwantedUrls, {attempts=8, delayMs=900} = {}) {
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const { list } = await fetchManifest();
+      const srcs = (list || []).map(it => it.src);
+      const nonePresent = unwantedUrls.every(u => !srcs.includes(u));
+      if (nonePresent) return true;
+    } catch (e) {
+      console.warn('waitForManifestToNotContain fetch failed', e);
+    }
+    await new Promise(r => setTimeout(r, delayMs));
+  }
+  return false;
+}
