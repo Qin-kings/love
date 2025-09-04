@@ -215,11 +215,12 @@
      </div>
      
      <!-- 在相册网格下方添加删除按钮（仅在管理模式下显示） -->
+     <!-- 修改删除按钮的初始状态 -->
      <div id="deleteSelectedContainer" class="hidden mt-4">
-       <button id="deleteSelectedBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg flex items-center gap-2 hover:bg-red-600 transition-colors">
+       <button id="deleteSelectedBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg flex items-center gap-2 cursor-not-allowed" disabled>
          <i class="fa fa-trash"></i> 删除选中
        </button>
-    </div>
+     </div>
      
      <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
        <!-- 图片将通过JS动态添加 -->
@@ -230,4 +231,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
