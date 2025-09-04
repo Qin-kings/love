@@ -174,9 +174,14 @@
      <!-- 标题和操作区 -->
      <div class="flex justify-between items-center mb-6">
        <h2 class="text-2xl font-semibold text-pink-700">我们的相册 📸</h2>
-       <button id="refreshGalleryBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg flex items-center gap-2 hover:bg-pink-600 transition-colors">
-         <i class="fa fa-refresh"></i> 刷新相册
-       </button>
+       <div class="flex gap-2">
+         <button id="refreshGalleryBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg flex items-center gap-2 hover:bg-pink-600 transition-colors">
+           <i class="fa fa-refresh"></i> 刷新相册
+         </button>
+         <button id="manageGalleryBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 transition-colors">
+           <i class="fa fa-cog"></i> 管理
+         </button>
+       </div>
      </div>
 
      <!-- 上传卡片 -->
@@ -209,6 +214,13 @@
        <h3 class="text-lg font-semibold text-gray-700 mb-3">我们的回忆</h3>
      </div>
      
+     <!-- 在相册网格下方添加删除按钮（仅在管理模式下显示） -->
+     <div id="deleteSelectedContainer" class="hidden mt-4">
+       <button id="deleteSelectedBtn" class="px-4 py-2 bg-red-500 text-white rounded-lg flex items-center gap-2 hover:bg-red-600 transition-colors">
+         <i class="fa fa-trash"></i> 删除选中
+       </button>
+    </div>
+     
      <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
        <!-- 图片将通过JS动态添加 -->
      </div>
@@ -218,3 +230,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+
