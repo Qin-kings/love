@@ -514,44 +514,99 @@
       }
     }
 
-    // 修改 renderGallery 函数中的事件绑定部分
-    async function renderGallery() {
-      try {
-        const { list } = await fetchManifest();
-        const container = $('#gallery');
-        container.innerHTML = '';
-        (list || []).slice().sort((a,b)=> (b.ts||0)-(a.ts||0)).forEach((item, idx) => {
-          const div = document.createElement('div');
-          div.className = 'relative cursor-pointer group';
+   // 修改 renderGallery 函数
+   async function renderGallery() {
+     try {
+       const { list } = await fetchManifest();
+       const container = $('#gallery');
+       container.innerHTML = '';
+       
+       (list || []).slice().sort((a,b)=> (b.ts||0)-(a.ts||0)).forEach((item, idx) => {
+         const div = document.createElement('div');
+         div.className = 'relative cursor-pointer group';
+         div.setAttribute('data-src', item.src); // 添加数据属性存储图片URL
         
-          const img = document.createElement('img');
-          img.src = item.src;
-          img.alt = item.alt || `照片 ${idx+1}`;
-          img.className = 'w-full h-40 object-cover rounded-lg shadow transition-transform duration-300 group-hover:scale-105';
-         
-          // 修改这里：直接在创建图片时添加 onclick 事件
-          img.onclick = () => {
-            console.log('点击图片，URL:', item.src);
-            openImageModal(item.src);
-          };
+         const img = document.createElement('img');
+         img.src = item.src;
+         img.alt = item.alt || `照片 ${idx+1}`;
+         img.className = 'w-full h-40 object-cover rounded-lg shadow transition-transform duration-300 group-hover:scale-105';
+         img.loading = 'lazy'; // 添加懒加载
         
-          // 添加悬停效果
-          const overlay = document.createElement('div');
-          overlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-300 flex items-center justify-center';
+         // 添加悬停效果
+         const overlay = document.createElement('div');
+         overlay.className = 'absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 rounded-lg transition-all duration-300 flex items-center justify-center';
         
-          const eyeIcon = document.createElement('i');
-          eyeIcon.className = 'fa fa-eye text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300';
+         const eyeIcon = document.createElement('i');
+         eyeIcon.className = 'fa fa-eye text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300';
         
-          overlay.appendChild(eyeIcon);
-          div.appendChild(img);
-          div.appendChild(overlay);
-          container.appendChild(div);
-        });
-        msg('');
-      } catch (e) {
-        console.error('renderGallery error', e);
-        msg('加载相册失败：' + (e.message || e));
-      }
+         overlay.appendChild(eyeIcon);
+         div.appendChild(img);
+         div.appendChild(overlay);
+         container.appendChild(div);
+       });
+       
+       // 添加事件委托处理点击
+       addGalleryClickHandlers();
+       msg('');
+     } catch (e) {
+       console.error('renderGallery error', e);
+       msg('加载相册失败：' + (e.message || e));
+     }
+   }
+   
+   // 添加事件委托处理函数
+   function addGalleryClickHandlers() {
+     const gallery = document.getElementById('gallery');
+     if (!gallery) return;
+     
+     // 移除旧的事件监听器（避免重复绑定）
+     gallery.removeEventListener('click', handleGalleryClick);
+     
+     // 添加新的事件监听器
+     gallery.addEventListener('click', handleGalleryClick);
+   }
+   
+   // 处理画廊点击事件
+   function handleGalleryClick(e) {
+     // 查找被点击的图片容器
+     const item = e.target.closest('[data-src]');
+     if (item) {
+       const src = item.getAttribute('data-src');
+       if (src) {
+         console.log('点击图片，URL:', src);
+         openImageModal(src);
+       }
+     }
+   }
+   
+   // 确保在页面加载时初始化事件处理
+   document.addEventListener('DOMContentLoaded', () => {
+     loadTableInfo();
+     loadCfgToForm();
+     renderGallery();
+     
+     // 文件选择时显示文件名
+     document.getElementById('fileInput').addEventListener('change', function(e) {
+       const fileName = document.getElementById('fileName');
+       if (this.files.length > 0) {
+         if (this.files.length === 1) {
+           fileName.textContent = this.files[0].name;
+         } else {
+           fileName.textContent = `${this.files.length}个文件已选择`;
+         }
+       } else {
+         fileName.textContent = "未选择任何文件";
+       }
+     });
+      
+     // 初始化并启动计时器更新恋爱时长
+     const startDate = getLoveDate();
+     calcLoveTime(); // 立即计算一次
+     setInterval(calcLoveTime, 1000); // 每秒更新一次
+     
+     // 初始添加事件处理
+     addGalleryClickHandlers();
+   });
     
      
     // Cloudinary 上传
@@ -761,6 +816,7 @@
   </script>
 </body>
 </html>
+
 
 
 
