@@ -2,52 +2,11 @@
 <html lang="zh">
 <head>
    <meta charset="UTF-8">
-   <meta name="viewport" content="width=device-width, initial-scale=1.0">
    <title>情侣小站 ❤️</title>
    <script src="https://cdn.tailwindcss.com"></script>
    <style>
       .love-time-hover:hover {
         background-color: #fce7f3 !important; /* 更深的粉色 */
-      }
-      
-      /* 响应式调整 */
-      @media (max-width: 768px) {
-        html {
-          font-size: 14px; /* 减小基础字体大小 */
-        }
-        
-        h1 {
-          font-size: 2.5rem !important; /* 调整标题大小 */
-        }
-        
-        button, .btn {
-          padding: 0.5rem 1rem !important; /* 调整按钮内边距 */
-          font-size: 0.9rem !important; /* 调整按钮字体大小 */
-        }
-        
-        .avatar-container {
-          margin-left: 10% !important;
-          margin-right: 10% !important;
-        }
-        
-        .avatar-img {
-          width: 5rem !important;
-          height: 5rem !important;
-        }
-        
-        .info-table th, .info-table td {
-          padding: 0.5rem !important;
-          font-size: 0.9rem !important;
-        }
-        
-        .gallery-img {
-          height: 8rem !important;
-        }
-        
-        .modal-content {
-          width: 90% !important;
-          max-width: 20rem !important;
-        }
       }
    </style>
    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -64,9 +23,9 @@
       <h2 class="text-xl font-semibold mb-4 text-center">我们的头像</h2>
     <div class="relative w-full flex justify-between">
       <!-- 左边头像 -->
-      <div class="flex flex-col items-center avatar-container ml-[20%]">
+      <div class="flex flex-col items-center ml-[20%]">
         <img id="avatar1"
-             class="w-24 h-24 rounded-full object-cover border-2 mb-2 cursor-pointer avatar-img"
+             class="w-24 h-24 rounded-full object-cover border-2 mb-2 cursor-pointer"
              src="https://picsum.photos/id/1/200/200"
              alt="老公头像"
              onclick="openModal('avatarModal', 'avatar1')">
@@ -74,9 +33,9 @@
       </div>
 
       <!-- 右边头像 -->
-      <div class="flex flex-col items-center avatar-container mr-[20%]">
+      <div class="flex flex-col items-center mr-[20%]">
         <img id="avatar2"
-             class="w-24 h-24 rounded-full object-cover border-2 mb-2 cursor-pointer avatar-img"
+             class="w-24 h-24 rounded-full object-cover border-2 mb-2 cursor-pointer"
              src="https://picsum.photos/id/2/200/200"
              alt="老婆头像"
              onclick="openModal('avatarModal', 'avatar2')">
@@ -87,7 +46,7 @@
 
   <!-- 头像修改弹出层 -->
   <div id="avatarModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 shadow-lg relative modal-content w-72">
+    <div class="bg-white rounded-xl p-6 shadow-lg relative w-72">
       <h3 class="text-lg font-semibold mb-4">更换头像</h3>
       <input type="file" id="avatarFileInput" accept="image/*" class="mb-3">
       <div class="flex justify-between">
@@ -100,7 +59,7 @@
   <!-- 个人信息 -->
   <div class="bg-white rounded-2xl shadow-lg p-6 w-full max-w-3xl mb-6">
     <h2 class="text-xl font-semibold mb-4">个人信息</h2>
-    <table id="infoTable" class="w-full border-collapse border text-center info-table">
+    <table id="infoTable" class="w-full border-collapse border text-center">
       <thead>
         <tr class="bg-gray-100">
           <th class="border p-2">项目</th>
@@ -113,8 +72,8 @@
       </tbody>
     </table>
     <div class="flex gap-3 mt-4">
-      <button type="button" onclick="addInfoRow()" class="px-4 py-2 bg-green-400 text-white rounded-xl shadow btn">新增</button>
-      <button type="button" onclick="saveTableInfo()" class="px-4 py-2 bg-pink-400 text-white rounded-xl shadow btn">保存</button>
+      <button type="button" onclick="addInfoRow()" class="px-4 py-2 bg-green-400 text-white rounded-xl shadow">新增</button>
+      <button type="button" onclick="saveTableInfo()" class="px-4 py-2 bg-pink-400 text-white rounded-xl shadow">保存</button>
     </div>
   </div>
 
@@ -130,7 +89,7 @@
 
   <!-- 相爱时长修改弹出层 -->
   <div id="loveDateModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
-    <div class="bg-white rounded-xl p-6 shadow-lg relative modal-content w-72">
+    <div class="bg-white rounded-xl p-6 shadow-lg relative w-72">
       <h3 class="text-lg font-semibold mb-4">修改相爱起始时间</h3>
       <input type="date" id="loveDateInModal" class="border rounded p-2 mb-3 w-full">
       <div class="flex justify-between">
@@ -192,8 +151,8 @@
       </div>
 
       <div class="mt-4 flex gap-2">
-        <button id="modalSaveCfgBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg btn">保存设置</button>
-        <button onclick="closeSettingsModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg border btn">关闭</button>
+        <button id="modalSaveCfgBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg">保存设置</button>
+        <button onclick="closeSettingsModal()" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg border">关闭</button>
       </div>
       <p class="text-xs text-gray-500 mt-2">
         提示：先在仓库创建 <code>gallery.json</code>，内容为 <code>[]</code>。页面会使用 GitHub API 读取最新内容（优于 raw.githubusercontent）。
@@ -227,7 +186,7 @@
           <div class="flex-1">
             <label class="block text-sm font-medium text-gray-700 mb-2">选择图片</label>
             <div class="flex items-center gap-3">
-              <label for="fileInput" class="cursor-pointer bg-white border border-pink-300 text-pink-700 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors btn">
+              <label for="fileInput" class="cursor-pointer bg-white border border-pink-300 text-pink-700 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors">
                 <i class="fa fa-cloud-upload mr-2"></i>选择文件
               </label>
               <span id="fileName" class="text-sm text-gray-500">未选择任何文件</span>
@@ -235,10 +194,10 @@
             </div>
           </div>
 
-          <button id="cancelUploadBtn" class="px-5 py-2.5 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-colors flex items-center gap-2 btn">
+          <button id="cancelUploadBtn" class="px-5 py-2.5 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-colors flex items-center gap-2">
             <i class="fa fa-times"></i> 取消上传
           </button>
-          <button id="uploadBtn" class="px-5 py-2.5 bg-pink-600 text-white rounded-lg font-medium hover:bg-pink-700 transition-colors flex items-center gap-2 btn">
+          <button id="uploadBtn" class="px-5 py-2.5 bg-pink-600 text-white rounded-lg font-medium hover:bg-pink-700 transition-colors flex items-center gap-2">
             <i class="fa fa-paper-plane"></i> 上传图片
           </button>
         </div>
@@ -247,7 +206,7 @@
       </div>
 
       <div class="flex justify-end">
-        <button onclick="closeModal('uploadModal')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg border btn">关闭</button>
+        <button onclick="closeModal('uploadModal')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg border">关闭</button>
       </div>
     </div>
   </div>
@@ -258,17 +217,14 @@
     <div class="flex justify-between items-center mb-6">
       <h2 class="text-2xl font-semibold text-pink-700">我们的相册 📸</h2>
       <div class="flex gap-2">
-         <!-- 上传按钮 -->
-        <button id="openUploadModalBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center gap-2 hover:bg-green-600 transition-colors btn">
-          <i class="fa fa-cloud-upload"></i> 
+        <button id="openUploadModalBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center gap-2 hover:bg-green-600 transition-colors">
+          <i class="fa fa-cloud-upload"></i> 上传
         </button>
-         <!-- 删除按钮 -->
-        <button id="manageGalleryBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 transition-colors btn">
-          <i class="fa fa-cog"></i>
+        <button id="manageGalleryBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 transition-colors">
+          <i class="fa fa-cog"></i> 管理
         </button>
-         <!-- 刷新按钮 -->
-        <button id="refreshGalleryBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg flex items-center gap-2 hover:bg-pink-600 transition-colors btn">
-          <i class="fa fa-refresh"></i> 
+        <button id="refreshGalleryBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg flex items-center gap-2 hover:bg-pink-600 transition-colors">
+          <i class="fa fa-refresh"></i> 刷新
         </button>
       </div>
     </div>
@@ -298,5 +254,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-
