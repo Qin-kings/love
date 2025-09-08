@@ -1,4 +1,10 @@
 // ========== 原有功能代码 ==========
+// ========== 分页相关变量 ==========
+let currentPage = 1;
+let totalPages = 1;
+const imagesPerPage = 8; // 每页12张图片 (3行 × 4列)
+let galleryList = []; // 存储所有图片数据
+
 // 在文件顶部添加
 let isManageMode = false;
 let selectedImages = [];
@@ -322,27 +328,42 @@ async function fetchManifest() {
 }
 
 // 替换现有的 renderGallery 函数
-async function renderGallery() {
+async function renderGallery(page = 1) {
   try {
     // 每次渲染相册时，重置选择状态
     selectedImages = [];
     updateDeleteButtonState();
     
     const { list } = await fetchManifest();
+    galleryList = list || [];
+    
+    // 计算总页数
+    totalPages = Math.ceil(galleryList.length / imagesPerPage);
+    if (totalPages === 0) totalPages = 1;
+    
+    // 确保当前页在有效范围内
+    currentPage = Math.max(1, Math.min(page, totalPages));
+    
     const container = $('#gallery');
     container.innerHTML = '';
 
-    if (!list || list.length === 0) {
-    container.innerHTML = `
-      <div class="col-span-full text-center py-8 text-gray-500">
-        <i class="fa fa-camera text-4xl mb-3"></i>
-        <p>还没有照片，上传第一张照片吧！</p>
-      </div>
-`    ;
-    return;
+    if (!galleryList || galleryList.length === 0) {
+      container.innerHTML = `
+        <div class="col-span-full text-center py-8 text-gray-500">
+          <i class="fa fa-camera text-4xl mb-3"></i>
+          <p>还没有照片，上传第一张照片吧！</p>
+        </div>
+      `;
+      updatePaginationControls();
+      return;
     }
     
-    (list || []).slice().sort((a,b)=> (b.ts||0)-(a.ts||0)).forEach((item, idx) => {
+    // 获取当前页的数据
+    const startIndex = (currentPage - 1) * imagesPerPage;
+    const endIndex = Math.min(startIndex + imagesPerPage, galleryList.length);
+    const currentPageData = galleryList.slice(startIndex, endIndex);
+    
+    currentPageData.forEach((item, idx) => {
       const div = document.createElement('div');
       div.className = 'relative cursor-pointer group';
       div.setAttribute('data-src', item.src);
@@ -385,6 +406,9 @@ async function renderGallery() {
       container.appendChild(div);
     });
     
+    // 更新分页控件
+    updatePaginationControls();
+    
     // 添加事件委托处理点击
     addGalleryClickHandlers();
     msg('');
@@ -400,9 +424,10 @@ async function renderGallery() {
         </button>
       </div>
     `;
-     galleryMsg('加载相册失败：' + (e.message || e));
+    galleryMsg('加载相册失败：' + (e.message || e));
   }
 }
+
 
 // 添加事件委托处理函数
 function addGalleryClickHandlers() {
@@ -876,4 +901,88 @@ function galleryMsg(text) {
       }, 5000);
     }
   }
+}
+
+// 更新分页控件
+function updatePaginationControls() {
+  const paginationContainer = document.getElementById('paginationControls');
+  if (!paginationContainer) return;
+  
+  paginationContainer.innerHTML = '';
+  
+  if (totalPages <= 1) {
+    return; // 只有一页时不显示分页控件
+  }
+  
+  // 创建分页控件
+  const paginationDiv = document.createElement('div');
+  paginationDiv.className = 'flex items-center justify-center mt-6 space-x-2';
+  
+  // 首页按钮
+  const firstBtn = createPaginationButton('首页', 1, currentPage === 1);
+  paginationDiv.appendChild(firstBtn);
+  
+  // 上一页按钮
+  const prevBtn = createPaginationButton('上一页', currentPage - 1, currentPage === 1);
+  paginationDiv.appendChild(prevBtn);
+  
+  // 页码输入
+  const pageInput = document.createElement('input');
+  pageInput.type = 'number';
+  pageInput.min = 1;
+  pageInput.max = totalPages;
+  pageInput.value = currentPage;
+  pageInput.className = 'w-16 h-8 border rounded text-center';
+  pageInput.addEventListener('change', function() {
+    let page = parseInt(this.value);
+    if (isNaN(page) || page < 1) page = 1;
+    if (page > totalPages) page = totalPages;
+    renderGallery(page);
+  });
+  paginationDiv.appendChild(pageInput);
+  
+  // 总页数显示
+  const totalSpan = document.createElement('span');
+  totalSpan.className = 'text-gray-600';
+  totalSpan.textContent = ` / ${totalPages}`;
+  paginationDiv.appendChild(totalSpan);
+  
+  // 下一页按钮
+  const nextBtn = createPaginationButton('下一页', currentPage + 1, currentPage === totalPages);
+  paginationDiv.appendChild(nextBtn);
+  
+  // 尾页按钮
+  const lastBtn = createPaginationButton('尾页', totalPages, currentPage === totalPages);
+  paginationDiv.appendChild(lastBtn);
+  
+  paginationContainer.appendChild(paginationDiv);
+}
+
+// 创建分页按钮
+function createPaginationButton(text, page, disabled) {
+  const button = document.createElement('button');
+  button.textContent = text;
+  button.className = `px-3 py-1 rounded ${disabled ? 'bg-gray-300 text-gray-500 cursor-not-allowed' : 'bg-pink-500 text-white hover:bg-pink-600'}`;
+  button.disabled = disabled;
+  
+  if (!disabled) {
+    button.addEventListener('click', () => renderGallery(page));
+  }
+  
+  return button;
+}
+
+// 修改 forceRefreshGallery 函数以支持分页
+function forceRefreshGallery() {
+  // 清除可能的缓存
+  if (window.caches) {
+    caches.keys().then(function(names) {
+      for (let name of names) caches.delete(name);
+    });
+  }
+  
+  // 重新加载相册，回到第一页
+  currentPage = 1;
+  renderGallery(1);
+  showNotification('已强制刷新相册 🔄');
 }
