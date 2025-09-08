@@ -8,6 +8,16 @@
       .love-time-hover:hover {
         background-color: #fce7f3 !important; /* 更深的粉色 */
       }
+      /* 分页控件样式 */
+      #paginationControls input[type="number"]::-webkit-outer-spin-button,
+      #paginationControls input[type="number"]::-webkit-inner-spin-button {
+        -webkit-appearance: none;
+        margin: 0;
+      }
+      
+      #paginationControls input[type="number"] {
+        -moz-appearance: textfield;
+      }
    </style>
    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
 </head>
@@ -248,9 +258,16 @@
      <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
        <!-- 图片将通过JS动态添加 -->
      </div>
+
+     <!-- 在相册网格下方添加分页控件 -->
+     <div id="paginationControls" class="mt-6">
+        <!-- 分页控件将通过JS动态添加 -->
+     </div>
+     
    </div>
 
   <!-- 引入外部JavaScript文件 -->
   <script src="script.js"></script>
 </body>
 </html>
+
