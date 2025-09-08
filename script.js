@@ -743,6 +743,12 @@ function toggleManageMode() {
     checkbox.parentElement.classList.toggle('hidden', !isManageMode);
   });
 }
+  
+  // 显示/隐藏所有选择框
+  document.querySelectorAll('.image-checkbox').forEach(checkbox => {
+    checkbox.parentElement.classList.toggle('hidden', !isManageMode);
+  });
+}
 
 // 更新删除按钮状态
 // 修改 updateDeleteButtonState 函数
