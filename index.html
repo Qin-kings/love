@@ -159,7 +159,7 @@
       </p>
     </div>
   </div>
-   
+
   <!-- 图片放大模态框 -->
   <div id="imageModal" class="fixed inset-0 bg-black bg-opacity-75 hidden items-center justify-center z-50 p-4">
     <div class="relative max-w-4xl w-full max-h-full">
@@ -171,52 +171,72 @@
       </div>
     </div>
   </div>
-   
-  <!-- 生活相册 - 替换为Cloudinary+GitHub版本 -->
-  <div class="bg-white rounded-2xl shadow-lg p-6 w-full max-w-3xl mb-6">
-     <!-- 标题和操作区 -->
-     <div class="flex justify-between items-center mb-6">
-       <h2 class="text-2xl font-semibold text-pink-700">我们的相册 📸</h2>
-       <div class="flex gap-2">
-         <button id="refreshGalleryBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg flex items-center gap-2 hover:bg-pink-600 transition-colors">
-           <i class="fa fa-refresh"></i> 刷新相册
-         </button>
-         <button id="manageGalleryBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 transition-colors">
-           <i class="fa fa-cog"></i> 管理
-         </button>
-       </div>
-     </div>
 
-     <!-- 上传卡片 -->
-     <div class="bg-pink-50 rounded-xl p-5 mb-6 border border-pink-200">
-       <h3 class="font-semibold text-pink-800 mb-3 text-lg">捕捉美好瞬间</h3>
-       <p class="text-sm text-pink-600 mb-4">上传图片到 Cloudinary 并保存到 GitHub</p>
-       
-       <div class="flex flex-col sm:flex-row gap-4 items-start">
-         <div class="flex-1">
-           <label class="block text-sm font-medium text-gray-700 mb-2">选择图片</label>
-           <div class="flex items-center gap-3">
-             <label for="fileInput" class="cursor-pointer bg-white border border-pink-300 text-pink-700 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors">
-               <i class="fa fa-cloud-upload mr-2"></i>选择文件
-             </label>
-             <span id="fileName" class="text-sm text-gray-500">未选择任何文件</span>
-             <input id="fileInput" type="file" accept="image/*" multiple class="hidden">
-           </div>
-         </div>
-         
-         <button id="uploadBtn" class="px-5 py-2.5 bg-pink-600 text-white rounded-lg font-medium hover:bg-pink-700 transition-colors flex items-center gap-2">
-           <i class="fa fa-paper-plane"></i> 上传图片
-         </button>
-       </div>
-       
-       <p id="msg" class="text-sm mt-3 text-pink-600"></p>
+  <!-- 上传图片模态框 -->
+  <div id="uploadModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+    <div class="bg-white rounded-xl shadow-lg p-6 w-full max-w-2xl mx-4">
+      <h2 class="text-xl font-semibold text-pink-700 mb-4">上传图片</h2>
+
+      <!-- 上传面板内容 -->
+      <div class="bg-pink-50 rounded-xl p-5 mb-4 border border-pink-200">
+        <h3 class="font-semibold text-pink-800 mb-3 text-lg">捕捉美好瞬间</h3>
+        <p class="text-sm text-pink-600 mb-4">上传图片到 Cloudinary 并保存到 GitHub</p>
+
+        <div class="flex flex-col sm:flex-row gap-4 items-start">
+          <div class="flex-1">
+            <label class="block text-sm font-medium text-gray-700 mb-2">选择图片</label>
+            <div class="flex items-center gap-3">
+              <label for="fileInput" class="cursor-pointer bg-white border border-pink-300 text-pink-700 px-4 py-2 rounded-lg hover:bg-pink-50 transition-colors">
+                <i class="fa fa-cloud-upload mr-2"></i>选择文件
+              </label>
+              <span id="fileName" class="text-sm text-gray-500">未选择任何文件</span>
+              <input id="fileInput" type="file" accept="image/*" multiple class="hidden">
+            </div>
+          </div>
+
+          <button id="cancelUploadBtn" class="px-5 py-2.5 bg-gray-500 text-white rounded-lg font-medium hover:bg-gray-600 transition-colors flex items-center gap-2">
+            <i class="fa fa-times"></i> 取消上传
+          </button>
+          <button id="uploadBtn" class="px-5 py-2.5 bg-pink-600 text-white rounded-lg font-medium hover:bg-pink-700 transition-colors flex items-center gap-2">
+            <i class="fa fa-paper-plane"></i> 上传图片
+          </button>
+        </div>
+
+        <p id="msg" class="text-sm mt-3 text-pink-600"></p>
       </div>
 
+      <div class="flex justify-end">
+        <button onclick="closeModal('uploadModal')" class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg border">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 生活相册 - 替换为Cloudinary+GitHub版本 -->
+  <div class="bg-white rounded-2xl shadow-lg p-6 w-full max-w-3xl mb-6">
+    <!-- 标题和操作区 -->
+    <div class="flex justify-between items-center mb-6">
+      <h2 class="text-2xl font-semibold text-pink-700">我们的相册 📸</h2>
+      <div class="flex gap-2">
+        <button id="openUploadModalBtn" class="px-4 py-2 bg-green-500 text-white rounded-lg flex items-center gap-2 hover:bg-green-600 transition-colors">
+          <i class="fa fa-cloud-upload"></i> 上传
+        </button>
+        <button id="manageGalleryBtn" class="px-4 py-2 bg-blue-500 text-white rounded-lg flex items-center gap-2 hover:bg-blue-600 transition-colors">
+          <i class="fa fa-cog"></i> 管理
+        </button>
+        <button id="refreshGalleryBtn" class="px-4 py-2 bg-pink-500 text-white rounded-lg flex items-center gap-2 hover:bg-pink-600 transition-colors">
+          <i class="fa fa-refresh"></i> 刷新
+        </button>
+      </div>
+    </div>
+
      <!-- 相册网格 -->
-     <div class="mb-4">
-       <h3 class="text-lg font-semibold text-gray-700 mb-3">我们的回忆</h3>
+     <!-- 找到相册标题部分，修改为： -->
+     <div class="mb-4 flex justify-between items-center">
+       <h3 class="text-lg font-semibold text-gray-700">我们的回忆</h3>
+       <!-- 添加消息容器 -->
+       <span id="galleryMessage" class="text-sm text-pink-600"></span>
      </div>
-     
+
      <!-- 在相册网格下方添加删除按钮（仅在管理模式下显示） -->
      <!-- 修改删除按钮的初始状态 -->
      <div id="deleteSelectedContainer" class="hidden mt-4">
@@ -224,7 +244,7 @@
          <i class="fa fa-trash"></i> 删除选中
        </button>
      </div>
-     
+
      <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
        <!-- 图片将通过JS动态添加 -->
      </div>
@@ -234,6 +254,3 @@
   <script src="script.js"></script>
 </body>
 </html>
-
-
-
