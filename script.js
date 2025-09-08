@@ -350,7 +350,7 @@ async function renderGallery() {
       const img = document.createElement('img');
       img.src = item.src;
       img.alt = item.alt || `照片 ${idx+1}`;
-      img.className = 'w-full h-40 object-cover rounded-lg shadow transition-transform duration-300 group-hover:scale-105 gallery-img';
+      img.className = 'w-full h-40 object-cover rounded-lg shadow transition-transform duration-300 group-hover:scale-105';
       img.loading = 'lazy';
       
       // 添加悬停效果
@@ -689,14 +689,14 @@ function toggleManageMode() {
   
   const manageBtn = document.getElementById('manageGalleryBtn');
   const deleteContainer = document.getElementById('deleteSelectedContainer');
-  // 点击按钮不再显示文字（管理和取消管理）
+  
   if (isManageMode) {
-    manageBtn.innerHTML = '<i class="fa fa-times"></i> ';
+    manageBtn.innerHTML = '<i class="fa fa-times"></i> 取消管理';
     manageBtn.classList.remove('bg-blue-500');
     manageBtn.classList.add('bg-gray-500');
     deleteContainer.classList.remove('hidden');
   } else {
-    manageBtn.innerHTML = '<i class="fa fa-cog"></i> ';
+    manageBtn.innerHTML = '<i class="fa fa-cog"></i> 管理';
     manageBtn.classList.remove('bg-gray-500');
     manageBtn.classList.add('bg-blue-500');
     deleteContainer.classList.add('hidden');
