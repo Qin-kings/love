@@ -18,6 +18,15 @@
       #paginationControls input[type="number"] {
         -moz-appearance: textfield;
       }
+      /* 确保空位占位但不可见 */
+      #gallery > div:empty {
+      visibility: hidden;
+      }
+   
+      /* 确保相册容器高度固定 */
+      #gallery {
+      min-height: 480px; /* 与内联样式保持一致 */
+      }
    </style>
    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
 </head>
@@ -255,7 +264,8 @@
        <span id="galleryMessage" class="text-sm text-pink-600"></span>
      </div>
 
-     <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+     <!-- 修改相册网格容器，添加固定高度 -->
+     <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" style="min-height: 480px;">
        <!-- 图片将通过JS动态添加 -->
      </div>
      <!-- 在相册网格下方添加分页控件 -->
@@ -268,4 +278,5 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
