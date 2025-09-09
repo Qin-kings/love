@@ -242,17 +242,17 @@
      <!-- 相册网格 -->
      <!-- 找到相册标题部分，修改为： -->
      <div class="mb-4 flex justify-between items-center">
-       <h3 class="text-lg font-semibold text-gray-700">我们的回忆</h3>
+       <div class="flex items-center">
+         <h3 class="text-lg font-semibold text-gray-700">我们的回忆</h3>
+         <!-- 将删除按钮移动到这里 -->
+         <div id="deleteSelectedContainer" class="hidden ml-4">
+           <button id="deleteSelectedBtn" class="px-3 py-1 bg-gray-400 text-white rounded-lg flex items-center gap-1 cursor-not-allowed text-sm" disabled>
+             <i class="fa fa-trash"></i> 删除选中
+           </button>
+         </div>
+       </div>
        <!-- 添加消息容器 -->
        <span id="galleryMessage" class="text-sm text-pink-600"></span>
-     </div>
-
-     <!-- 在相册网格下方添加删除按钮（仅在管理模式下显示） -->
-     <!-- 修改删除按钮的初始状态 -->
-     <div id="deleteSelectedContainer" class="hidden mt-4">
-       <button id="deleteSelectedBtn" class="px-4 py-2 bg-gray-400 text-white rounded-lg flex items-center gap-2 cursor-not-allowed" disabled>
-         <i class="fa fa-trash"></i> 删除选中
-       </button>
      </div>
 
      <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
@@ -268,3 +268,4 @@
   <script src="script.js"></script>
 </body>
 </html>
+
