@@ -18,14 +18,40 @@
       #paginationControls input[type="number"] {
         -moz-appearance: textfield;
       }
+     
+      /* 确保在所有设备上都保持4列布局 */
+      #gallery {
+         grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
       /* 确保空位占位但不可见 */
       #gallery > div:empty {
-      visibility: hidden;
+         visibility: hidden;
       }
    
       /* 确保相册容器高度固定 */
       #gallery {
-      min-height: 480px; /* 与内联样式保持一致 */
+         min-height: 480px; /* 与内联样式保持一致 */
+      }
+      /* 响应式调整 - 在小屏幕上保持4列但调整图片大小 */
+      @media (max-width: 640px) {
+         #gallery {
+            gap: 0.5rem;
+         }
+  
+         #gallery img {
+            height: 32vw; /* 在小屏幕上使用视口宽度单位 */
+         }
+  
+         #gallery > div:empty {
+            height: 32vw;
+         }
+      }
+      
+      /* 在大屏幕上固定图片高度 */
+      @media (min-width: 641px) {
+         #gallery img {
+            height: 10rem; /* 与 h-40 相同 */
+         }
       }
    </style>
    <link href="https://cdn.jsdelivr.net/npm/font-awesome@4.7.0/css/font-awesome.min.css" rel="stylesheet">
@@ -265,7 +291,7 @@
      </div>
 
      <!-- 修改相册网格容器，添加固定高度 -->
-     <div id="gallery" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4" style="min-height: 480px;">
+     <div id="gallery" class="grid grid-cols-4 gap-4" style="min-height: 336px;">
        <!-- 图片将通过JS动态添加 -->
      </div>
      <!-- 在相册网格下方添加分页控件 -->
@@ -278,5 +304,6 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
