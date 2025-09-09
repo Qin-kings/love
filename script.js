@@ -404,6 +404,17 @@ async function renderGallery(page = 1) {
       div.appendChild(checkboxContainer);
       container.appendChild(div);
     });
+
+    // 填充空位以确保布局稳定
+    const currentItemsCount = currentPageData.length;
+    if (currentItemsCount < imagesPerPage) {
+      const emptySlots = imagesPerPage - currentItemsCount;
+      for (let i = 0; i < emptySlots; i++) {
+        const emptyDiv = document.createElement('div');
+        emptyDiv.className = 'h-40'; // 与图片容器相同的高度
+        container.appendChild(emptyDiv);
+      }
+    }
     
     // 更新分页控件
     updatePaginationControls();
