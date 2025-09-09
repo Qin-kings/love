@@ -409,6 +409,10 @@ async function renderGallery(page = 1) {
     const currentItemsCount = currentPageData.length;
     if (currentItemsCount < imagesPerPage) {
       const emptySlots = imagesPerPage - currentItemsCount;
+      
+      // 计算需要填充的行数
+      const rowsToFill = Math.ceil(emptySlots / 4);
+      
       for (let i = 0; i < emptySlots; i++) {
         const emptyDiv = document.createElement('div');
         emptyDiv.className = 'h-40'; // 与图片容器相同的高度
