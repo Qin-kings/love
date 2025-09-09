@@ -1,13 +1,13 @@
 // ========== 原有功能代码 ==========
-// ========== 分页相关变量 ==========
-let currentPage = 1;
-let totalPages = 1;
-const imagesPerPage = 8; // 每页12张图片 (3行 × 4列)
-let galleryList = []; // 存储所有图片数据
-
 // 在文件顶部添加
 let isManageMode = false;
 let selectedImages = [];
+
+// ========== 分页相关变量 ==========
+let currentPage = 1;
+let totalPages = 1;
+const imagesPerPage = 8; // 每页8张图片 (2行 × 4列)
+let galleryList = []; // 存储所有图片数据
 
 let currentAvatarId = null;
 // 默认头像路径
@@ -327,7 +327,6 @@ async function fetchManifest() {
   }
 }
 
-// 替换现有的 renderGallery 函数
 async function renderGallery(page = 1) {
   try {
     // 每次渲染相册时，重置选择状态
@@ -427,7 +426,6 @@ async function renderGallery(page = 1) {
     galleryMsg('加载相册失败：' + (e.message || e));
   }
 }
-
 
 // 添加事件委托处理函数
 function addGalleryClickHandlers() {
@@ -743,12 +741,6 @@ function toggleManageMode() {
     checkbox.parentElement.classList.toggle('hidden', !isManageMode);
   });
 }
-  
-  // 显示/隐藏所有选择框
-  document.querySelectorAll('.image-checkbox').forEach(checkbox => {
-    checkbox.parentElement.classList.toggle('hidden', !isManageMode);
-  });
-}
 
 // 更新删除按钮状态
 // 修改 updateDeleteButtonState 函数
@@ -992,3 +984,4 @@ function forceRefreshGallery() {
   renderGallery(1);
   showNotification('已强制刷新相册 🔄');
 }
+
