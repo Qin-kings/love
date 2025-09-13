@@ -3,6 +3,9 @@
 let isManageMode = false;
 let selectedImages = [];
 
+// 追踪当前打开的图片索引
+let currentImageIndex = -1;
+
 // ========== 分页相关变量 ==========
 let currentPage = 1;
 let totalPages = 1;
@@ -19,6 +22,14 @@ const defaultAvatars = {
 const DEFAULT_LOVE_DATE = "2024-02-26T00:00:00+08:00";
 // 保存原始日期值，用于取消时恢复
 let originalLoveDate = "";
+
+// 个人信息表格相关
+const PERSONAL_INFO_KEY = 'personalInfoTable_v1';
+const fallbackPersonalInfo = [
+  { project: "年龄", ta: "22", me: "23" },
+  { project: "爱好", ta: "运动", me: "睡觉" },
+  { project: "游戏", ta: "王者", me: "蛋仔" }
+];
 
 // 打开弹窗
 function openModal(modalId, avatarId = null) {
@@ -83,13 +94,6 @@ function resetAvatar() {
 });
 
 // 个人信息表格
-const PERSONAL_INFO_KEY = 'personalInfoTable_v1';
-const fallbackPersonalInfo = [
-  { project: "年龄", ta: "22", me: "23" },
-  { project: "爱好", ta: "运动", me: "睡觉" },
-  { project: "游戏", ta: "王者", me: "蛋仔" }
-];
-
 function createInfoRow(project = '', ta = '', me = '') {
   const tr = document.createElement('tr');
   const tdProj = document.createElement('td');
@@ -137,7 +141,8 @@ function addInfoRow() {
   tbody.appendChild(createInfoRow());
 }
 
-function saveTableInfo() {
+// 修改保存函数，支持云端存储
+async function saveTableInfo() {
   const rows = document.querySelectorAll('#infoTableBody tr');
   const data = [];
   rows.forEach(row => {
@@ -147,32 +152,153 @@ function saveTableInfo() {
     if (project.trim() === '' && ta.trim() === '' && me.trim() === '') return;
     data.push({ project, ta, me });
   });
+  
+  // 保存到本地存储
   localStorage.setItem(PERSONAL_INFO_KEY, JSON.stringify(data));
-  showNotification('已保存 ✅');
+  
+  // 尝试保存到云端
+  try {
+    await saveInfoToGitHub(data);
+    showNotification('已保存到云端 ✅');
+  } catch (e) {
+    console.error('保存到云端失败', e);
+    showNotification('保存到云端失败，已保存到本地 ❌');
+  }
 }
 
-function loadTableInfo() {
+// 从GitHub加载个人信息
+async function loadTableInfo() {
   const tbody = document.getElementById('infoTableBody');
   tbody.innerHTML = '';
-  const saved = localStorage.getItem(PERSONAL_INFO_KEY);
-
-  if (saved) {
-    try {
-      const arr = JSON.parse(saved);
-      if (Array.isArray(arr) && arr.length > 0) {
-        arr.forEach(r => tbody.appendChild(createInfoRow(r.project, r.ta, r.me)));
-        return;
+  
+  let data = null;
+  
+  // 优先尝试从GitHub加载
+  try {
+    data = await fetchInfoFromGitHub();
+    if (data && data.length > 0) {
+      // 保存到本地存储
+      localStorage.setItem(PERSONAL_INFO_KEY, JSON.stringify(data));
+    }
+  } catch (e) {
+    console.warn("从GitHub加载个人信息失败，使用本地存储：", e);
+  }
+  
+  // 如果GitHub加载失败，尝试从本地存储加载
+  if (!data) {
+    const saved = localStorage.getItem(PERSONAL_INFO_KEY);
+    if (saved) {
+      try {
+        data = JSON.parse(saved);
+      } catch (e) {
+        console.warn("解析本地存储失败：", e);
       }
-    } catch (e) {
-      console.warn("解析 localStorage 失败：", e);
     }
   }
 
-  const defaultInfo = (window.defaultPersonalInfo && Array.isArray(window.defaultPersonalInfo))
-    ? window.defaultPersonalInfo
-    : fallbackPersonalInfo;
+  // 如果都没有，使用默认数据
+  if (!data || !Array.isArray(data) || data.length === 0) {
+    data = (window.defaultPersonalInfo && Array.isArray(window.defaultPersonalInfo))
+      ? window.defaultPersonalInfo
+      : fallbackPersonalInfo;
+  }
 
-  defaultInfo.forEach(r => tbody.appendChild(createInfoRow(r.project, r.ta, r.me)));
+  // 渲染表格
+  data.forEach(r => tbody.appendChild(createInfoRow(r.project, r.ta, r.me)));
+}
+
+// 从GitHub获取个人信息
+async function fetchInfoFromGitHub() {
+  const { ghOwner, ghRepo, ghInfoFile, ghBranch, ghToken } = getCfg();
+  
+  if (!ghOwner || !ghRepo || !ghInfoFile) {
+    throw new Error('GitHub配置不完整');
+  }
+  
+  // 优先尝试GitHub API
+  try {
+    const url = `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/${encodeURIComponent(ghInfoFile)}?ref=${encodeURIComponent(ghBranch)}`;
+    const headers = { 'Accept': 'application/vnd.github+json' };
+    if (ghToken) {
+      headers['Authorization'] = `Bearer ${ghToken}`;
+    }
+    
+    const res = await fetch(url, { headers });
+    if (res.status === 404) return null; // 文件不存在
+    if (!res.ok) throw new Error('GitHub API请求失败: ' + res.status);
+    
+    const j = await res.json();
+    const content = atob(j.content.replace(/\s/g, ''));
+    return JSON.parse(content);
+  } catch (apiError) {
+    console.warn('GitHub API请求失败，尝试raw方式:', apiError);
+    
+    // 回退到raw方式
+    const rawUrl = `https://raw.githubusercontent.com/${ghOwner}/${ghRepo}/${ghBranch}/${ghInfoFile}`;
+    const res = await fetch(rawUrl);
+    if (!res.ok) throw new Error('Raw请求失败: ' + res.status);
+    
+    return await res.json();
+  }
+}
+
+// 保存个人信息到GitHub
+async function saveInfoToGitHub(data) {
+  const { ghOwner, ghRepo, ghInfoFile, ghBranch, ghToken } = getCfg();
+  
+  if (!ghToken) {
+    throw new Error('请先在设置中配置GitHub Token');
+  }
+  
+  // 获取当前文件的sha（如果存在）
+  let sha = null;
+  try {
+    const url = `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/${encodeURIComponent(ghInfoFile)}?ref=${encodeURIComponent(ghBranch)}`;
+    const headers = {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${ghToken}`
+    };
+    
+    const res = await fetch(url, { headers });
+    if (res.ok) {
+      const fileInfo = await res.json();
+      sha = fileInfo.sha;
+    }
+  } catch (e) {
+    // 文件可能不存在，sha保持null
+    console.log('获取文件sha失败，可能是新文件:', e);
+  }
+  
+  // 更新文件
+  const apiUrl = `https://api.github.com/repos/${ghOwner}/${ghRepo}/contents/${encodeURIComponent(ghInfoFile)}`;
+  const content = btoa(unescape(encodeURIComponent(JSON.stringify(data, null, 2))));
+  
+  const body = {
+    message: '更新个人信息',
+    content: content,
+    branch: ghBranch
+  };
+  
+  if (sha) {
+    body.sha = sha;
+  }
+  
+  const res = await fetch(apiUrl, {
+    method: 'PUT',
+    headers: {
+      'Accept': 'application/vnd.github+json',
+      'Authorization': `Bearer ${ghToken}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(body)
+  });
+  
+  if (!res.ok) {
+    const error = await res.text();
+    throw new Error('保存到GitHub失败: ' + error);
+  }
+  
+  return true;
 }
 
 // 相爱时长功能（修复显示问题）
@@ -236,29 +362,34 @@ function showNotification(message) {
 const C = {
   cloudName: 'cloudName', uploadPreset: 'uploadPreset',
   ghOwner: 'ghOwner', ghRepo: 'ghRepo', ghBranch: 'ghBranch',
-  ghFile: 'ghFile', ghTokenSaved: 'ghTokenSaved'
+  ghFile: 'ghFile', ghTokenSaved: 'ghTokenSaved',
+  ghInfoFile: 'ghInfoFile' // 新增个人信息文件配置
 };
 const $ = s => document.querySelector(s);
 const msg = t => { $('#msg').textContent = t || ''; };
 
 function loadCfgToForm() {
+  $('#uploaderName').value = localStorage.getItem('uploaderName') || '我们';
   $('#cloudName').value = localStorage.getItem(C.cloudName) || 'dbqhemrnw';
   $('#uploadPreset').value = localStorage.getItem(C.uploadPreset) || 'unsigned_preset';
   $('#ghOwner').value = localStorage.getItem(C.ghOwner) || 'Qin-kings';
   $('#ghRepo').value = localStorage.getItem(C.ghRepo) || 'love';
   $('#ghBranch').value = localStorage.getItem(C.ghBranch) || 'main';
   $('#ghFile').value = localStorage.getItem(C.ghFile) || 'gallery.json';
+  $('#ghInfoFile').value = localStorage.getItem(C.ghInfoFile) || 'info.json'; // 新增
   const t = localStorage.getItem(C.ghTokenSaved) || '';
   if (t) { $('#ghToken').value = t; $('#rememberToken').checked = true; }
 }
 
 function saveFormToCfg() {
+  localStorage.setItem('uploaderName', $('#uploaderName').value.trim() || '我们');
   localStorage.setItem(C.cloudName, $('#cloudName').value.trim());
   localStorage.setItem(C.uploadPreset, $('#uploadPreset').value.trim());
   localStorage.setItem(C.ghOwner, $('#ghOwner').value.trim());
   localStorage.setItem(C.ghRepo, $('#ghRepo').value.trim());
   localStorage.setItem(C.ghBranch, $('#ghBranch').value.trim() || 'main');
   localStorage.setItem(C.ghFile, $('#ghFile').value.trim() || 'gallery.json');
+  localStorage.setItem(C.ghInfoFile, $('#ghInfoFile').value.trim() || 'info.json'); // 新增
   const t = $('#ghToken').value.trim();
   if ($('#rememberToken').checked && t) localStorage.setItem(C.ghTokenSaved, t);
   if (!$('#rememberToken').checked) localStorage.removeItem(C.ghTokenSaved);
@@ -274,6 +405,7 @@ function getCfg() {
     ghRepo: $('#ghRepo').value.trim(),
     ghBranch: $('#ghBranch').value.trim() || 'main',
     ghFile: $('#ghFile').value.trim() || 'gallery.json',
+    ghInfoFile: $('#ghInfoFile').value.trim() || 'info.json', // 新增
     ghToken: $('#ghToken').value.trim() || localStorage.getItem(C.ghTokenSaved) || ''
   };
 }
@@ -466,7 +598,7 @@ function addGalleryClickHandlers() {
 
 // 确保在页面加载时初始化事件处理
 document.addEventListener('DOMContentLoaded', () => {
-  loadTableInfo();
+  loadTableInfo(); // 修改为异步加载
   loadCfgToForm();
   renderGallery();
 
@@ -609,7 +741,18 @@ async function startUpload() {
     // 逐个上传 Cloudinary
     for (const f of files) {
       const url = await uploadToCloudinary(f);
-      const item = { src: url, alt: f.name, who: '我们', ts: Date.now() };
+      const uploaderName = localStorage.getItem('uploaderName') || '我们';
+      // 确保名字是正确编码的字符串
+      const encodedName = encodeURIComponent(uploaderName);
+      const item = { 
+        src: url, 
+        alt: f.name, 
+        who: encodedName, // 存储编码后的名字
+        ts: Date.now(),
+        filename: f.name,
+        uploadTime: new Date().toLocaleString('zh-CN')
+      };
+
       list.push(item);
       addedUrls.push(url);
     }
@@ -675,9 +818,9 @@ document.getElementById('refreshGalleryBtn').addEventListener('click', renderGal
 function openImageModal(src) {
   const modal = document.getElementById('imageModal');
   const modalImage = document.getElementById('modalImage');
- 
+  
   console.log('打开图片模态框，尝试加载图片:', src);
- 
+
   // 确保URL有效
   if (!src || typeof src !== 'string') {
     console.error('无效的图片URL:', src);
@@ -694,16 +837,32 @@ function openImageModal(src) {
     // 可以设置一个默认错误图片
     modalImage.alt = '图片加载失败';
   };
- 
+  
   modalImage.src = src;
   modal.classList.remove('hidden');
   document.body.style.overflow = 'hidden'; // 防止背景滚动
+
+  // 新增这一行：保存当前图片URL到全局变量，以便信息按钮使用
+  window.currentModalImageSrc = src;
+  // 记录当前索引
+  currentImageIndex = galleryList.findIndex(item => item.src === src);
+
+  console.log('保存的图片URL:', window.currentModalImageSrc);
+
+  // 新增：确保信息弹窗是隐藏的
+  hideImageInfo();
 }
 
 function closeImageModal() {
   const modal = document.getElementById('imageModal');
   modal.classList.add('hidden');
   document.body.style.overflow = ''; // 恢复背景滚动
+
+  // 新增：关闭信息弹窗
+  hideImageInfo();
+  
+  // 新增：清除当前图片URL
+  window.currentModalImageSrc = null;
 }
 
 // 点击模态框背景关闭
@@ -1000,3 +1159,121 @@ function forceRefreshGallery() {
   showNotification('已强制刷新相册 🔄');
 }
 
+// 显示图片信息
+function showImageInfo(src) {
+  console.log('显示图片信息，URL:', src);
+
+  // 查找图片信息
+  const imageInfo = galleryList.find(item => item.src === src);
+  console.log('找到的图片信息:', imageInfo);
+
+  if (!imageInfo) {
+    console.log('未找到图片信息');
+    return;
+  }
+  
+  const infoModal = document.getElementById('imageInfoModal');
+  const infoContent = document.getElementById('imageInfoContent');
+  
+  if (!infoModal || !infoContent) {
+    console.log('信息弹窗元素未找到');
+    return;
+  }
+  
+  // 使用方法二解码上传者名字
+  let uploaderName = '未知';
+  try {
+    uploaderName = decodeURIComponent(imageInfo.who);
+    console.log('解码后的上传者名字:', uploaderName);
+  } catch (e) {
+    console.log('解码上传者名字失败，使用原值:', e);
+    uploaderName = imageInfo.who || '未知';
+  }
+  
+  // 添加调试信息
+  console.log('上传者名字:', decodeURIComponent(imageInfo.who));
+  console.log('文件名:', imageInfo.filename);
+  console.log('上传时间:', imageInfo.uploadTime);
+  
+  // 构建信息内容
+  let html = `
+    <div class="mb-2"><strong>${imageInfo.filename || '未命名'}</strong></div>
+    <div class="mb-1">上传者: ${decodeURIComponent(imageInfo.who) || '未知'}</div>
+    <div>上传时间: ${imageInfo.uploadTime || '未知'}</div>
+  `;
+  
+  infoContent.innerHTML = html;
+  infoModal.classList.remove('hidden');
+  console.log('信息弹窗已显示');
+}
+
+// 添加信息按钮事件监听
+document.addEventListener('DOMContentLoaded', function() {
+  // 使用事件委托，在文档级别监听点击事件
+  document.addEventListener('click', function(e) {
+    // 检查点击的是否是信息按钮
+    if (e.target && (e.target.id === 'infoButton' || e.target.closest('#infoButton'))) {
+      console.log('信息按钮被点击');
+      if (window.currentModalImageSrc) {
+        showImageInfo(window.currentModalImageSrc);
+      } else {
+        console.log('没有保存的图片URL');
+      }
+      e.stopPropagation(); // 防止事件冒泡
+    }
+
+    // 检查点击的是否是图片模态框（但不是信息弹窗）
+    if (e.target && e.target.id === 'imageModal') {
+      hideImageInfo();
+    }
+  });
+
+  // 点击信息区域外部时隐藏信息
+  const infoModal = document.getElementById('imageInfoModal');
+  if (infoModal) {
+    infoModal.addEventListener('click', function(e) {
+      e.stopPropagation();
+    });
+  }
+});
+  
+// 隐藏图片信息
+function hideImageInfo() {
+  const infoModal = document.getElementById('imageInfoModal');
+  if (infoModal) {
+    infoModal.classList.add('hidden');
+    console.log('信息弹窗已隐藏');
+  }
+}
+
+function showPrevImage() {
+  if (currentImageIndex > 0) {
+    currentImageIndex--;
+    const newSrc = galleryList[currentImageIndex].src;
+    openImageModal(newSrc);
+  }
+}
+
+function showNextImage() {
+  if (currentImageIndex < galleryList.length - 1) {
+    currentImageIndex++;
+    const newSrc = galleryList[currentImageIndex].src;
+    openImageModal(newSrc);
+  }
+}
+
+// 绑定按钮点击事件
+document.addEventListener('DOMContentLoaded', () => {
+  const prevBtn = document.getElementById('prevImageBtn');
+  const nextBtn = document.getElementById('nextImageBtn');
+  if (prevBtn) prevBtn.addEventListener('click', (e) => { e.stopPropagation(); showPrevImage(); });
+  if (nextBtn) nextBtn.addEventListener('click', (e) => { e.stopPropagation(); showNextImage(); });
+});
+
+// 额外：键盘方向键支持
+document.addEventListener('keydown', (e) => {
+  if (!document.getElementById('imageModal').classList.contains('hidden')) {
+    if (e.key === 'ArrowLeft') showPrevImage();
+    if (e.key === 'ArrowRight') showNextImage();
+  }
+});
