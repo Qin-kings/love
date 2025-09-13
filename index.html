@@ -182,6 +182,11 @@
           <span class="text-sm text-gray-600">Manifest 路径</span>
           <input id="ghFile" class="w-full mt-1 border rounded px-2 py-1" placeholder="例如：gallery.json" value="gallery.json" />
         </label>
+        <!-- 在设置浮层中，找到GitHub设置部分，在ghFile输入框后添加以下内容 -->
+        <label class="block">
+          <span class="text-sm text-gray-600">个人信息JSON路径</span>
+          <input id="ghInfoFile" class="w-full mt-1 border rounded px-2 py-1" placeholder="例如：info.json" value="info.json" />
+        </label>
         <label class="block sm:col-span-2">
           <span class="text-sm text-gray-600">GitHub Token（PAT，写入权限）</span>
           <input id="ghToken" type="password" class="w-full mt-1 border rounded px-2 py-1" placeholder="只在本机输入，不要提交到仓库" />
@@ -304,6 +309,7 @@
   <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
